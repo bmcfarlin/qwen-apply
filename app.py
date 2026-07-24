@@ -25,6 +25,8 @@ import subprocess
 from datetime import date
 import shutil
 
+__version__ = "0.1.0"
+
 load_dotenv()
 
 logger.remove()
@@ -924,6 +926,11 @@ class App:
 
 typr = typer.Typer()
 
+def _version_callback(value: bool):
+    if value:
+        print(f"qwen-apply {__version__}")
+        raise typer.Exit()
+
 @typr.command()
 def apply():
     logger.debug("apply")
@@ -1004,7 +1011,7 @@ def salary():
     asyncio.run(_app.salary())
 
 @typr.callback(invoke_without_command=True)
-def default_command(ctx: typer.Context):
+def default_command(ctx: typer.Context, version: Annotated[bool, typer.Option("--version", callback=_version_callback, is_eager=True)] = False):
     if ctx.invoked_subcommand is None:
         async def _run():
             try:

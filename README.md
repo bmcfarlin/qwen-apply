@@ -122,6 +122,9 @@ python app.py salary
 
 # Test the LLM connection
 python app.py test
+
+# Show version
+python app.py --version
 ```
 
 ### Web Dashboard
