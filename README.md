@@ -4,7 +4,7 @@ AI-powered job application toolkit that scrapes job listings, scores them agains
 
 ## How It Works
 
-1. **Job Discovery** - Scrapes job listings from multiple sources (NVIDIA Careers, Black Women Talk Tech, Workday via Google Search) using keywords you define.
+1. **Job Discovery** - Scrapes job listings from multiple sources (NVIDIA Careers, Workday via Google Search, Black Women Talk Tech, and more) using keywords you define.
 2. **Scoring** - Each job description is scored (0-10) by an LLM against your resume for fit.
 3. **Resume Generation** - Jobs scoring above 7 get an ATS-optimized plain-text resume, an HTML-formatted resume, and a PDF.
 4. **Cover Letters** - Generates tailored cover letters or short YC-style cold pitches.
