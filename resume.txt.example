@@ -1,0 +1,89 @@
+Jane Doe
+San Francisco, CA
+Senior Software Engineer | Open Source Contributor | Speaker
+Email jane@example.com
+Mobile (555) 123-4567
+https://linkedin.com/in/jane-doe
+https://github.com/janedoe
+
+Executive Summary
+
+Senior software engineer with extensive experience designing, building, and scaling production systems, cloud infrastructure, and data platforms. Proven track record leading technical strategy and end-to-end delivery across startup and enterprise environments. Deep expertise in Python, distributed systems, machine learning, API design, and cloud-native architecture.
+
+Patented Inventions
+
+U.S. Patent No. US0000000B2
+System and Method for Automated Data Processing
+Data Pipeline Software
+
+Education
+
+Massachusetts Institute of Technology, Cambridge, Massachusetts
+Master of Science in Computer Science
+
+University of California, Berkeley, California
+Bachelor of Science in Computer Science, Magna Cum Laude
+
+Certifications
+
+Amazon Web Solutions Architect Professional
+AWS, 2024
+
+Google Cloud Professional Data Engineer
+GCP, 2023
+
+Technical Skills
+
+Artificial Intelligence & Machine Learning
+Large Language Models (LLMs) | Retrieval-Augmented Generation (RAG) | NLP | Computer Vision | MLOps | Model Serving | Feature Stores | Vector Databases
+
+Programming Languages & Scripting
+Python | Go | TypeScript | Rust | Java | SQL | Bash | GraphQL
+
+Cloud, Infrastructure & DevOps
+AWS (ECS, Lambda, S3, SageMaker) | GCP (BigQuery, GKE) | Kubernetes | Docker | Terraform | CI/CD (GitHub Actions, ArgoCD) | Linux Administration
+
+Databases & Data Engineering
+PostgreSQL | MongoDB | Redis | Elasticsearch | Apache Kafka | Apache Spark | dbt | Snowflake | Airflow
+
+Integration, Middleware & APIs
+REST APIs | gRPC | GraphQL | Event-Driven Architecture | Message Queues (SQS, RabbitMQ) | OAuth 2.0 | Webhooks
+
+Tools, Methodologies & Leadership
+Git | JIRA | Datadog | PagerDuty | Agile/Scrum | Technical Mentoring | Architecture Decision Records | RFC Process
+
+Experience
+
+Acme Corp | San Francisco, CA
+Senior Software Engineer | January 2023 - Present
+
+- Designed and deployed a real-time data pipeline processing 10 million events per day using Kafka and Spark Streaming.
+- Led migration of monolithic application to microservices architecture, reducing deployment time by 80%.
+- Built and maintained ML model serving infrastructure supporting 50+ models in production.
+- Mentored a team of 5 junior engineers through code reviews, pair programming, and architecture discussions.
+- Implemented observability stack with Datadog, reducing mean time to resolution from 45 minutes to 10 minutes.
+
+StartupCo | Remote
+Staff Engineer | June 2020 - December 2022
+
+- Architected a multi-tenant SaaS platform serving 200+ enterprise customers on AWS.
+- Designed and built a real-time collaboration feature using WebSockets and CRDTs.
+- Reduced infrastructure costs by 40% through right-sizing, spot instances, and caching strategies.
+- Established engineering best practices including code review guidelines, testing standards, and CI/CD pipelines.
+- Led incident response process and reduced P1 incidents by 60% year-over-year.
+
+TechStart | Austin, TX
+Software Engineer | March 2017 - May 2020
+
+- Developed RESTful APIs serving mobile and web clients with 99.9% uptime.
+- Built an ETL pipeline to consolidate data from 15+ third-party integrations.
+- Implemented automated testing framework that increased code coverage from 30% to 85%.
+- Collaborated with product team to ship 12 major features over 3 years.
+
+DataFlow Inc | Seattle, WA
+Junior Developer | August 2015 - February 2017
+
+- Contributed to a distributed data processing platform handling petabyte-scale datasets.
+- Wrote and optimized SQL queries for reporting dashboards used by 500+ business users.
+- Participated in on-call rotation and resolved production incidents across multiple services.
+- Developed internal tools that automated manual workflows, saving 20 hours per week.

@@ -1,0 +1,47 @@
+Senior Software Engineer - Platform
+Example Corp
+San Francisco, CA (Hybrid)
+
+About Us
+
+Example Corp is building the next generation of data infrastructure that helps engineering teams ship faster without sacrificing reliability. We are backed by top-tier investors and serve hundreds of enterprise customers worldwide.
+
+About the Role
+
+We are looking for a Senior Software Engineer to join our Core Platform team. You will own the design and implementation of critical backend systems that power our real-time data pipeline and developer-facing APIs. This is a high-impact role where you will work closely with product, design, and infrastructure teams to define and build the technical foundation of our platform.
+
+What You Will Do
+
+- Design, build, and operate scalable backend services and APIs that process millions of events per day.
+- Lead architectural decisions for distributed systems, balancing performance, reliability, and developer experience.
+- Own end-to-end delivery of major platform features from RFC through production rollout.
+- Mentor junior engineers and raise the technical bar through code reviews, design docs, and incident response.
+- Collaborate with cross-functional teams to define system requirements and integration patterns.
+- Drive improvements in observability, testing, and deployment automation across the platform.
+
+What We Are Looking For
+
+- 5+ years of professional software engineering experience, with at least 2 years working on distributed backend systems at scale.
+- Strong proficiency in Python or Go, with experience building production-grade services and REST APIs.
+- Deep understanding of distributed systems concepts including consensus, replication, eventual consistency, and failure modes.
+- Experience with cloud infrastructure (AWS or GCP), Kubernetes, and infrastructure-as-code tools like Terraform.
+- Hands-on experience with message brokers such as Kafka, RabbitMQ, or SQS.
+- Familiarity with relational and NoSQL databases (PostgreSQL, MongoDB, Redis) and query optimization.
+- Experience with observability tools (Datadog, Prometheus, Grafana) and production incident management.
+- Strong communication skills and ability to lead technical discussions across teams.
+
+Nice to Have
+
+- Experience with real-time stream processing frameworks (Spark Streaming, Flink).
+- Background in platform engineering or developer experience tooling.
+- Contributions to open-source projects or public technical writing.
+- Experience with ML model serving infrastructure or feature stores.
+
+Benefits
+
+- Competitive salary ($180,000 - $240,000) plus equity.
+- Comprehensive health, dental, and vision insurance.
+- 401(k) with company match.
+- Flexible PTO and remote work options.
+- Annual learning and development stipend.
+- Home office setup allowance.
