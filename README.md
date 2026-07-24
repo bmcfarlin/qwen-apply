@@ -1,5 +1,8 @@
 # qwen-apply
 
+![Qwen Open Weight AI](https://aplicar.ai/wp-content/uploads/2026/05/Qwen-the-open-weight-AI-models-1140x760.png)
+
+
 AI-powered job application toolkit that scrapes job listings, scores them against your resume using an LLM, and generates ATS-optimized resumes, cover letters, and YC-style cold pitches tailored to each role.
 
 ## How It Works
