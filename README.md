@@ -21,6 +21,24 @@ All LLM calls go through an OpenAI-compatible API (Alibaba Cloud / Qwen models).
 - `wkhtmltopdf` (for HTML-to-PDF conversion)
 - Playwright Chromium browser
 
+## Getting API Keys
+
+### SerpAPI (job search via Google)
+
+1. Go to https://serpapi.com/users/sign_up and create a free account.
+2. After logging in, visit your dashboard at https://serpapi.com/dashboard.
+3. Copy your API key and set it as `SERP_API_KEY` in your `.env` file.
+
+The free tier includes 250 searches per month (50/hour).
+
+### Qwen / Alibaba Cloud (LLM)
+
+1. Go to https://www.qwencloud.com/ and sign up.
+2. Go to https://home.qwencloud.com/api-keys to create or retrieve your API key.
+3. Copy the key and set it as `ALIBABA_API_KEY_US` in your `.env` file.
+
+The recommended model is `qwen3.6-35b-a3b` for its strong reasoning ability. Smaller models like `qwen-flash` will work but produce lower-quality output. The default base URL is `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`. Adjust `ALIBABA_BASE_URL_US` and `ALIBABA_MODEL_US` in `.env` if you use a different region or model.
+
 ## Setup
 
 ```bash
@@ -42,7 +60,7 @@ playwright install chromium
 cat > .env << 'EOF'
 ALIBABA_API_KEY_US=your_api_key
 ALIBABA_BASE_URL_US=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-ALIBABA_MODEL_US=qwen-plus
+ALIBABA_MODEL_US=qwen3.6-35b-a3b
 SERP_API_KEY=your_serpapi_key
 EOF
 
