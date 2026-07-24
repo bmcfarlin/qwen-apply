@@ -155,8 +155,6 @@ out/
 app.py           # Core logic: scraping, scoring, generation, CLI
 server.py        # FastAPI web dashboard
 db.py            # SQLite database helper (aiosqlite)
-mcp.py           # MCP server (experimental)
-test.py          # LLM connection test
 resume.txt       # Your base resume
 keywords.txt     # Job search keywords
 job.txt           # Target job description (ad-hoc mode)
