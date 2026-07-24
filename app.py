@@ -330,6 +330,7 @@ class App:
 
         content = await self.chat(prompt)
         return content
+    
     async def gen_html_cover(self, cover, html_cover):
         logger.debug("gen_html_cover")
         content = None
@@ -508,16 +509,15 @@ class App:
                 results.append(clean_line)
         return results
 
-    async def run(self):
+    async def run(self, sources):
         logger.debug("run")
+        logger.debug(sources)
 
         await self.init_playwright()
 
         resume = await self.get_resume()
 
         keywords = await self.get_keywords()
-        
-        sources = ["nvidia", "bwtt", "workday"]
 
         for source in sources:
 
@@ -957,6 +957,24 @@ def test():
     asyncio.run(_app.test())
 
 @typr.command()
+def run(source: str):
+    logger.debug("run")
+
+    if source == "nvidia":
+        pass
+    elif source == "bwtt":
+        pass
+    elif source == "workday":
+        pass
+    else:
+        logger.error("invalid source")
+        sys.exit(1)
+
+    _app = App()
+    sources = [source]
+    asyncio.run(_app.run(sources))
+
+@typr.command()
 def score():
     logger.debug("score")
 
@@ -995,7 +1013,8 @@ def default_command(ctx: typer.Context):
                 await _app.finish()
 
         _app = App()
-        asyncio.run(_run())
+        sources = ["workday"]
+        asyncio.run(_run(sources))
 
 if __name__ == "__main__":
     typr()

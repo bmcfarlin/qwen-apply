@@ -99,6 +99,9 @@ The CLI is built with [Typer](https://typer.tiangolo.com/). Run commands via `py
 # Full pipeline: scrape jobs, score, and generate resumes for matches
 python app.py
 
+# Run the pipeline for a specific source (nvidia, bwtt, or workday)
+python app.py run nvidia
+
 # Generate an ATS-optimized resume + cover letter for the job in job.txt
 python app.py apply
 
