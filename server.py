@@ -223,9 +223,9 @@ app.mount("/out", StaticFiles(directory="out", html=False), name="out")
 @app.get("/", response_class=HTMLResponse)
 async def read_jobs(
     request: Request,
-    min_score: int = Query(0, ge=0, le=10),
+    min_score: int = Query(6, ge=0, le=10),
     max_score: int = Query(10, ge=0, le=10),
-    sort_by: str = Query("dtm", pattern="^(dtm|score|title)$"),
+    sort_by: str = Query("score", pattern="^(dtm|score|title)$"),
     sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     source: str = Query(""),
     remote: bool = Query(False),

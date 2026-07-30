@@ -1,6 +1,5 @@
 import sys
 import os
-import json
 import asyncio
 from loguru import logger
 import base64
@@ -11,18 +10,17 @@ from dotenv import load_dotenv
 import re
 from pydantic import BaseModel, Field
 import signal
-from openai import OpenAI
+from openai import AsyncOpenAI
 from serpapi import GoogleSearch
 from playwright.async_api import async_playwright
 import uuid
 import db
 from urllib.parse import urlencode, quote, quote_plus
-from datetime import datetime
+from datetime import datetime, date
 import typer
 from typing_extensions import Annotated
 from pathlib import Path
 import subprocess
-from datetime import date
 import shutil
 
 __version__ = "0.1.0"
@@ -31,32 +29,41 @@ load_dotenv()
 
 logger.remove()
 
-filter={"":"DEBUG"}
+_filter={"":"DEBUG"}
 
 logger.add(
     sink=sys.stdout, 
     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{line} - {message}",
     level="DEBUG", 
     colorize=True,
-    filter=filter
+    filter=_filter
 )
 
-ALIBABA_API_KEY_US = os.getenv("ALIBABA_API_KEY_US")
-ALIBABA_BASE_URL_US = os.getenv("ALIBABA_BASE_URL_US")
-ALIBABA_MODEL_US = os.getenv("ALIBABA_MODEL_US")
 
-QWEN_API_KEY_US = os.getenv("QWEN_API_KEY_US")
-QWEN_BASE_URL_US = os.getenv("QWEN_BASE_URL_US")
-QWEN_MODEL_US = os.getenv("QWEN_MODEL_US")
+ALIBABA_API_KEY_US = os.getenv("ALIBABA_API_KEY_US")
+if not ALIBABA_API_KEY_US:
+    raise EnvironmentError("ALIBABA_API_KEY_US is not set")
+
+ALIBABA_BASE_URL_US = os.getenv("ALIBABA_BASE_URL_US")
+if not ALIBABA_BASE_URL_US:
+    raise EnvironmentError("ALIBABA_BASE_URL_US is not set")
+
+ALIBABA_MODEL_US = os.getenv("ALIBABA_MODEL_US")
+if not ALIBABA_MODEL_US:
+    raise EnvironmentError("ALIBABA_MODEL_US is not set")
 
 SERP_API_KEY = os.getenv("SERP_API_KEY")
+if not SERP_API_KEY:
+    raise EnvironmentError("SERP_API_KEY is not set")
+
+os.makedirs("./out", exist_ok=True)
 
 class App:
 
     def __init__(self):
         logger.debug("__init__")
 
-        self._llm = OpenAI(
+        self._llm = AsyncOpenAI(
             api_key=ALIBABA_API_KEY_US,
             base_url=ALIBABA_BASE_URL_US
         )
@@ -86,7 +93,7 @@ class App:
             await self._playwright.stop()
             self._playwright = None
         if self._llm:
-            self._llm.close()
+            await self._llm.close()
             self._llm = None
         await db.close()
 
@@ -139,6 +146,7 @@ class App:
     async def load_nvidia_jobs(self, keywords):
         logger.debug("load_nvidia_jobs")
 
+
         for keyword in keywords:
 
             logger.debug(f"keyword: {keyword}")
@@ -186,37 +194,37 @@ class App:
         logger.debug("gen_resume")
         content = None
         prompt = f"""
-        <role>
-        You are an expert ATS (Applicant Tracking System) resume optimizer and technical recruiter specializing in Workday systems. Your task is to rewrite and optimize the provided resume specifically for the provided job description. 
-        </role>
+<role>
+You are an expert ATS (Applicant Tracking System) resume optimizer and technical recruiter specializing in Workday systems. Your task is to rewrite and optimize the provided resume specifically for the provided job description. 
+</role>
 
-        <instructions>
-        Align the candidate's existing experience as closely as possible to the target role without fabricating degrees, job titles, or completely unrelated skills. The output must pass through Workday ATS parsing with a 90%+ keyword match rate while remaining highly compelling and readable to a human hiring manager.
-        Extract the critical hard skills, software, methodologies, and specific noun phrases directly from the job description. Seamlessly integrate these exact phrases into the skills section and experience bullet points. Do not use synonyms if the job description uses a specific industry-standard term.
-        Do not lie or invent fake experience. However, logically translate the candidate's actual past accomplishments into the lexicon of the job description. (For example, if the job asks for "edge deployment" and the candidate built software for IoT/raspberry pi, reframe it using the job's exact phrasing).
-        Analyze the core responsibilities of the target job. Rewrite the candidate's bullet points to emphasize achievements and duties that directly map to those responsibilities. De-emphasize or remove administrative tasks, pitching, payroll, or unrelated operational duties unless they are specifically requested in the job description. Prioritize metrics and quantifiable results.
-        Analyze the job description and resume. Determine the top 20 skills required for the job.
-        Insert a Technical Skills section in the resume just below the Executive Summary section with all 20 skills on one line separated by a | character.
-        </instructions>
+<instructions>
+Align the candidate's existing experience as closely as possible to the target role without fabricating degrees, job titles, or completely unrelated skills. The output must pass through Workday ATS parsing with a 90%+ keyword match rate while remaining highly compelling and readable to a human hiring manager.
+Extract the critical hard skills, software, methodologies, and specific noun phrases directly from the job description. Seamlessly integrate these exact phrases into the skills section and experience bullet points. Do not use synonyms if the job description uses a specific industry-standard term.
+Do not lie or invent fake experience. However, logically translate the candidate's actual past accomplishments into the lexicon of the job description. (For example, if the job asks for "edge deployment" and the candidate built software for IoT/raspberry pi, reframe it using the job's exact phrasing).
+Analyze the core responsibilities of the target job. Rewrite the candidate's bullet points to emphasize achievements and duties that directly map to those responsibilities. De-emphasize or remove administrative tasks, pitching, payroll, or unrelated operational duties unless they are specifically requested in the job description. Prioritize metrics and quantifiable results.
+Analyze the job description and resume. Determine the top 20 skills required for the job.
+Insert a Technical Skills section in the resume just below the Executive Summary section with all 20 skills on one line separated by a | character.
+</instructions>
 
-        <constraints>
-        Return only ASCII characters (character codes 0-127).
-        Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
-        Use only plain ASCII equivalents.
-        Output ONLY plain text. No markdown (no **, no ##), no bolding, no italics, no bullet point symbols (use standard hyphens only), and no tables.
-        Do not use columns, headers, or footers.
-        List work experience in reverse cronological order.
-        Keep the resume length down to 1 to 2 pages.
-        If older work experience will not fit in 2 pages, create work experience entry that summarizes all older work experience.
-        </constraints>
+<constraints>
+Return only ASCII characters (character codes 0-127).
+Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
+Use only plain ASCII equivalents.
+Output ONLY plain text. No markdown (no **, no ##), no bolding, no italics, no bullet point symbols (use standard hyphens only), and no tables.
+Do not use columns, headers, or footers.
+List work experience in reverse cronological order.
+Keep the resume length down to 1 to 2 pages.
+If older work experience will not fit in 2 pages, create work experience entry that summarizes all older work experience.
+</constraints>
 
-        <job>
-        {description}
-        </job>
+<job>
+{description}
+</job>
 
-        <resume>
-        {resume}
-        </resume>
+<resume>
+{resume}
+</resume>
         """
         content = await self.chat(prompt)
         return content
@@ -225,28 +233,28 @@ class App:
         logger.debug("gen_html_resume")
         content = None
         prompt = f"""
-        You are an expert resume writer. Your job is to format a plain text resume into HTML.
-        Do not include any logos or URLs in the Experience section.
+You are an expert resume writer. Your job is to format a plain text resume into HTML.
+Do not include any logos or URLs in the Experience section.
 
-        CONSTRAINTS
-        ===========
-        Return only ASCII characters (character codes 0-127).
-        Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
-        Use only plain ASCII equivalents.
-        Follow the EXAMPLE HTML RESUME structure, style, and class names exactly.
-        For bulleted list items (li), do not include the hyphen (`-`) at the beginning of the copy.
+CONSTRAINTS
+===========
+Return only ASCII characters (character codes 0-127).
+Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
+Use only plain ASCII equivalents.
+Follow the EXAMPLE HTML RESUME structure, style, and class names exactly.
+For bulleted list items (li), do not include the hyphen (`-`) at the beginning of the copy.
 
-        EXAMPLE HTML RESUME
-        ===================
-        {html_resume}
+EXAMPLE HTML RESUME
+===================
+{html_resume}
 
-        TEXT RESUME
-        ===========
-        {resume}
+TEXT RESUME
+===========
+{resume}
 
 
-        HTML RESUME
-        ===========
+HTML RESUME
+===========
         """
 
         content = await self.chat(prompt)
@@ -257,42 +265,41 @@ class App:
         content = None
         current_date = date.today().strftime("%B %d, %Y")
         prompt = f"""
-        ROLE
-        ====
-        You are a professional cover letter writing expert, with an extensive experience in crafting compelling cover letters.
-        Your role is now to create a personalized cover letter that effectively showcases my qualifications and potential value I would bring to employers. When I give you my information and the job details, you will:
+ROLE
+====
+You are a professional cover letter writing expert, with an extensive experience in crafting compelling cover letters.
+Your role is now to create a personalized cover letter that effectively showcases my qualifications and potential value I would bring to employers. When I give you my information and the job details, you will:
 
-        INSTRUCTIONS
-        ============
-        Retreive the job title and company name from the job description.
-        Write an opening paragraph showing enthusiasm and knowledge of the company.
-        Create clear and concise paragraphs that connect my experience to the job requirements.
-        Highlight my achievements and skills, using specific examples and metrics when available.
-        Incorporate industry-specific keywords naturally.
-        Maintain a professional and engaging tone and style.
-        Always be focused on the value proposition I can offer to the company.
-        Close the cover letter with a confident call-to-action and a professional closing
+INSTRUCTIONS
+============
+Retreive the job title and company name from the job description.
+Write an opening paragraph showing enthusiasm and knowledge of the company.
+Create clear and concise paragraphs that connect my experience to the job requirements.
+Highlight my achievements and skills, using specific examples and metrics when available.
+Incorporate industry-specific keywords naturally.
+Maintain a professional and engaging tone and style.
+Always be focused on the value proposition I can offer to the company.
+Close the cover letter with a confident call-to-action and a professional closing
 
-        CONTEXT
-        =======
-        Today's date is {current_date}.
+CONTEXT
+=======
+Today's date is {current_date}.
 
-        CONSTRAINTS
-        ===========
-        The cover letter should be approximately 300-500 words, avoid generic phrases, be tailored specifically to the role and company, balance confidence with humility.
-        Do not use hyphens in the output.
-        Return only ASCII characters (character codes 0-127).
-        Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
-        Use only plain ASCII equivalents.
+CONSTRAINTS
+===========
+The cover letter should be approximately 300-500 words, avoid generic phrases, be tailored specifically to the role and company, balance confidence with humility.
+Do not use hyphens in the output.
+Return only ASCII characters (character codes 0-127).
+Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
+Use only plain ASCII equivalents.
 
-        JOB DESCRIPTION
-        ===============
-        {description}
+JOB DESCRIPTION
+===============
+{description}
 
-        RESUME
-        ======
-        {resume}
-
+RESUME
+======
+{resume}
         """
         content = await self.chat(prompt)
         return content
@@ -301,33 +308,33 @@ class App:
         logger.debug("gen_yc")
         content = None
         prompt = f"""
-        You are an expert startup operator helping a candidate write a cold pitch for the Y Combinator job board. 
+You are an expert startup operator helping a candidate write a cold pitch for the Y Combinator job board. 
 
-        The audience is a startup founder or founding engineer. They are busy, read on their phone, and hate corporate jargon. They value ownership, speed, and specific technical proof over generic soft skills.
+The audience is a startup founder or founding engineer. They are busy, read on their phone, and hate corporate jargon. They value ownership, speed, and specific technical proof over generic soft skills.
 
-        Your task is to take the provided RESUME and JOB DESCRIPTION and write a short, punchy pitch message (under 150 words).
+Your task is to take the provided RESUME and JOB DESCRIPTION and write a short, punchy pitch message (under 150 words).
 
-        RULES FOR THE PITCH:
-        1. DO NOT start with "Hi, my name is [Name] and I am writing to..." Jump straight into the value.
-        2. FORMAT: Start with a lowercase "hey [Founder Name]," or "hi [Founder Name]," (Find the founder's name in the JD if possible. If not, use "hi team,").
-        3. THE HOOK: Connect the candidate's most relevant past achievement directly to the core problem the startup is solving in 1-2 sentences.
-        4. THE PROOF: Mention 1 specific technology or metric from the resume that perfectly matches the JD's hardest requirement. 
-        5. ADDRESS DEALBREAKERS IMMEDIATELY: 
-           - If the candidate's location doesn't match the JD, explicitly state they are relocating/toeing the office requirement.
-           - If the candidate's primary stack is different (e.g., C# vs Node.js) but they have adjacent experience, confidently state they are comfortable cross-training into the required stack based on architectural experience.
-        6. TONE: Conversational, confident, slightly informal. Use contractions (I'm, don't, we've). 
-        7. NEGATIVE CONSTRAINTS: Do NOT use words like "delve," "leverage," "tailored," "testament," "synergy," "passionate," or "eager." Do NOT write a standard 3-paragraph cover letter.
+RULES FOR THE PITCH:
+1. DO NOT start with "Hi, my name is [Name] and I am writing to..." Jump straight into the value.
+2. FORMAT: Start with a lowercase "hey [Founder Name]," or "hi [Founder Name]," (Find the founder's name in the JD if possible. If not, use "hi team,").
+3. THE HOOK: Connect the candidate's most relevant past achievement directly to the core problem the startup is solving in 1-2 sentences.
+4. THE PROOF: Mention 1 specific technology or metric from the resume that perfectly matches the JD's hardest requirement. 
+5. ADDRESS DEALBREAKERS IMMEDIATELY: 
+   - If the candidate's location doesn't match the JD, explicitly state they are relocating/toeing the office requirement.
+   - If the candidate's primary stack is different (e.g., C# vs Node.js) but they have adjacent experience, confidently state they are comfortable cross-training into the required stack based on architectural experience.
+6. TONE: Conversational, confident, slightly informal. Use contractions (I'm, don't, we've). 
+7. NEGATIVE CONSTRAINTS: Do NOT use words like "delve," "leverage," "tailored," "testament," "synergy," "passionate," or "eager." Do NOT write a standard 3-paragraph cover letter.
 
-        JOB DESCRIPTION
-        ===============
-        {description}
+JOB DESCRIPTION
+===============
+{description}
 
-        RESUME
-        ======
-        {resume}
+RESUME
+======
+{resume}
 
-        PITCH
-        ====
+PITCH
+====
         """
 
         content = await self.chat(prompt)
@@ -337,24 +344,24 @@ class App:
         logger.debug("gen_html_cover")
         content = None
         prompt = f"""
-        You are an expert resume writer. Your job is to format a plain text cover letter into HTML that prints on 1 page.
+You are an expert resume writer. Your job is to format a plain text cover letter into HTML that prints on 1 page.
 
-        CONSTRAINTS
-        ===========
-        Return only ASCII characters (character codes 0-127).
-        Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
-        Use only plain ASCII equivalents.
+CONSTRAINTS
+===========
+Return only ASCII characters (character codes 0-127).
+Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
+Use only plain ASCII equivalents.
 
-        EXAMPLE COVER LETTER
-        ====================
-        {html_cover}
+EXAMPLE COVER LETTER
+====================
+{html_cover}
 
-        TEXT COVER LETTER
-        =================
-        {cover}
+TEXT COVER LETTER
+=================
+{cover}
 
-        HTML COVER LETTER
-        =================
+HTML COVER LETTER
+=================
         """
 
         content = await self.chat(prompt)
@@ -362,31 +369,31 @@ class App:
 
     async def get_score(self, description, resume):
         logger.debug("get_score")
-        score = 0
+        score = None
         prompt = f"""
-        ROLE
-        ====
-        You are a tech recuriter. Your job is to match candiates with jobs. You do this by giving each candidate a score based on how well their skills and experience match the job description.
-        A score of 0 means they are not a fit in any way.  A score of 10 means they are a perfect fit and have everything needed for the job.
-        Given the following RESUME and JOB_DESCRIPTION, generate a score for this candidate.  
-        The score just be returned in JSON format.  Example: {{"score":7, "reason":"the candidate has most of the skills but lacks experience"}}
+ROLE
+====
+You are a tech recuriter. Your job is to match candiates with jobs. You do this by giving each candidate a score based on how well their skills and experience match the job description.
+A score of 0 means they are not a fit in any way.  A score of 10 means they are a perfect fit and have everything needed for the job.
+Given the following RESUME and JOB_DESCRIPTION, generate a score for this candidate.  
+The score just be returned in JSON format.  Example: {{"score":7, "reason":"the candidate has most of the skills but lacks experience"}}
 
-        CONSTRAINTS
-        ===========
-        Return only ASCII characters (character codes 0-127).
-        Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
-        Use only plain ASCII equivalents.
+CONSTRAINTS
+===========
+Return only ASCII characters (character codes 0-127).
+Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
+Use only plain ASCII equivalents.
 
-        JOB_DESCRIPTION
-        ===============
-        {description}
+JOB_DESCRIPTION
+===============
+{description}
 
-        RESUME
-        ======
-        {resume}
+RESUME
+======
+{resume}
 
-        SCORE
-        =====
+SCORE
+=====
         """
         result_json = await self.chat(prompt)
         try:
@@ -394,7 +401,6 @@ class App:
             score = result["score"]
         except Exception as e:
             logger.error(e)
-            score = 0
         return score
 
     async def get_description(self, link, source):
@@ -424,7 +430,7 @@ class App:
         logger.debug(len(content))
         message = {"role": "user", "content": content}
         messages = [message]
-        response = self._llm.chat.completions.create(
+        response = await self._llm.chat.completions.create(
             model=ALIBABA_MODEL_US,
             messages=messages,
             stream=False,
@@ -540,32 +546,31 @@ class App:
             for job in jobs:
 
                 job_id = job["job_id"]
-                source = job["source"]
+                job_source = job["source"]
                 title = job["title"]
                 link = job["link"]
 
                 logger.debug("====================")
-                logger.debug(f"source: {source}")
+                logger.debug(f"source: {job_source}")
                 logger.debug(f"title: {title}")
                 logger.debug(f"link: {link}")
 
                 if job.get("description"):
                     description = job["description"]
                 else:
-                    description = await self.get_description(link, source)
-                    logger.debug(description)
-
+                    description = await self.get_description(link, job_source)
                     if description:
                         await db.upsert_job({"link": link, "description": description})
                     else:
                         logger.error("description is None")
+                        continue
 
                 if job.get("score") is not None:
                     score = job["score"]
                 else:
                     score = await self.get_score(description, resume)
-
-                    if score:
+                    logger.debug(f"score: {score}")
+                    if score is not None:
                         await db.upsert_job({"link": link, "score": score})
 
                         if score > 7:
@@ -597,26 +602,26 @@ class App:
 
             score = 0
             prompt = f"""
-            You are a tech recuriter. Your job is to analyze job descriptions.
-            Analyze the job description below and return a list of the top 20 skills required for the job.
-            Return the list of skills in JSON format.
+You are a tech recuriter. Your job is to analyze job descriptions.
+Analyze the job description below and return a list of the top 20 skills required for the job.
+Return the list of skills in JSON format.
 
-            CONSTRAINTS
-            ===========
-            Return only ASCII characters (character codes 0-127).
-            Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
-            Use only plain ASCII equivalents.
+CONSTRAINTS
+===========
+Return only ASCII characters (character codes 0-127).
+Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
+Use only plain ASCII equivalents.
 
-            EXAMPLE
-            =======
-            {{"skills":["Javacript", "LLM", "Artifical Intelligence", "RAG", "Python"]}}
+EXAMPLE
+=======
+{{"skills":["Javacript", "LLM", "Artifical Intelligence", "RAG", "Python"]}}
 
-            JOB_DESCRIPTION
-            ===============
-            {description}
+JOB_DESCRIPTION
+===============
+{description}
 
-            SKILLS
-            =====
+SKILLS
+=====
             """
 
             result_json = await self.chat(prompt)
@@ -735,18 +740,14 @@ class App:
 
         return content
 
-    async def salary(self):
+    async def salary(self, source):
         logger.debug("salary")
 
-        source = "bwtt"
         jobs = await db.get_jobs_by_source(source)
 
         for job in jobs:
 
-            if job.get("min_salary") is not None:
-                continue
-
-            if job.get("max_salary") is not None:
+            if job.get("min_salary") is not None and job.get("max_salary") is not None:
                 continue
 
             link = job["link"]
@@ -757,28 +758,28 @@ class App:
                 description = job["description"]
 
                 prompt = f"""
-                You are a technical recruiter. 
-                Analyze the following JOB DESCRIPTION to determine the salary range.
-                If no salary is found set the min_salary and max_salary = 0 (zero).
-                Always respond in JSON format. 
+You are a technical recruiter. 
+Analyze the following JOB DESCRIPTION to determine the salary range.
+If no salary is found set the min_salary and max_salary = 0 (zero).
+Always respond in JSON format. 
 
-                CONSTRAINTS
-                ===========
-                Return only ASCII characters (character codes 0-127).
-                Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
-                Use only plain ASCII equivalents.
+CONSTRAINTS
+===========
+Return only ASCII characters (character codes 0-127).
+Do not use smart quotes, em dashes, en dashes, bullets, ellipses, non-breaking spaces, or any Unicode symbols.
+Use only plain ASCII equivalents.
 
-                EXAMPLE
-                =======
-                {{"min_salary":200000, "max_salary":320000}}
+EXAMPLE
+=======
+{{"min_salary":200000, "max_salary":320000}}
 
 
-                JOB_DESCRIPTION
-                ===============
-                {description}
+JOB_DESCRIPTION
+===============
+{description}
 
-                SALARY
-                ======
+SALARY
+======
                 """
                 result_json = await self.chat(prompt)
                 try:
@@ -936,8 +937,11 @@ def apply():
     logger.debug("apply")
 
     async def _run():
-        resume = await _app.resume()
-        cover = await _app.cover(resume)
+        try:
+            resume = await _app.resume()
+            cover = await _app.cover(resume)
+        finally:
+            await _app.finish()
 
     _app = App()
     asyncio.run(_run())
@@ -946,22 +950,40 @@ def apply():
 def yc():
     logger.debug("yc")
 
+    async def _run():
+        try:
+            await _app.yc()
+        finally:
+            await _app.finish()
+
     _app = App()
-    asyncio.run(_app.yc())
+    asyncio.run(_run())
 
 @typr.command()
 def cover():
     logger.debug("cover")
 
+    async def _run():
+        try:
+            await _app.cover()
+        finally:
+            await _app.finish()
+
     _app = App()
-    asyncio.run(_app.cover())
+    asyncio.run(_run())
 
 @typr.command()
 def test():
     logger.debug("test")
 
+    async def _run():
+        try:
+            await _app.test()
+        finally:
+            await _app.finish()
+
     _app = App()
-    asyncio.run(_app.test())
+    asyncio.run(_run())
 
 @typr.command()
 def run(source: str):
@@ -977,45 +999,85 @@ def run(source: str):
         logger.error("invalid source")
         sys.exit(1)
 
+    async def _run(sources):
+        try:
+            await _app.run(sources)
+        finally:
+            await _app.finish()
+
     _app = App()
     sources = [source]
-    asyncio.run(_app.run(sources))
+    asyncio.run(_run(sources))
 
 @typr.command()
 def score():
     logger.debug("score")
 
+    async def _run():
+        try:
+            await _app.score()
+        finally:
+            await _app.finish()
+
     _app = App()
-    asyncio.run(_app.score())
+    asyncio.run(_run())
 
 @typr.command()
 def resume():
     logger.debug("resume")
 
+    async def _run():
+        try:
+            await _app.resume()
+        finally:
+            await _app.finish()
+
     _app = App()
-    asyncio.run(_app.resume())
+    asyncio.run(_run())
 
 @typr.command()
 def keyword(job_id: str):
     logger.debug("keyword")
     logger.debug(job_id)
 
+    async def _run(job_id):
+        try:
+            await _app.keyword(job_id)
+        finally:
+            await _app.finish()
+
     _app = App()
-    asyncio.run(_app.keyword(job_id))
+    asyncio.run(_run(job_id))
 
 @typr.command()
-def salary():
+def salary(source: str):
     logger.debug("salary")
 
+    if source == "nvidia":
+        pass
+    elif source == "bwtt":
+        pass
+    elif source == "workday":
+        pass
+    else:
+        logger.error("invalid source")
+        sys.exit(1)
+
+    async def _run(source):
+        try:
+            await _app.salary(source)
+        finally:
+            await _app.finish()
+
     _app = App()
-    asyncio.run(_app.salary())
+    asyncio.run(_run(source))
 
 @typr.callback(invoke_without_command=True)
 def default_command(ctx: typer.Context, version: Annotated[bool, typer.Option("--version", callback=_version_callback, is_eager=True)] = False):
     if ctx.invoked_subcommand is None:
-        async def _run():
+        async def _run(sources):
             try:
-                await _app.run()
+                await _app.run(sources)
             finally:
                 await _app.finish()
 
