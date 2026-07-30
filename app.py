@@ -23,7 +23,7 @@ from pathlib import Path
 import subprocess
 import shutil
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 load_dotenv()
 
